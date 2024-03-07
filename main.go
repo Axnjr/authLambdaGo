@@ -18,7 +18,7 @@ func main() { lambda.Start(requestHandler) }
 
 func requestHandler(ctx context.Context, sqsEvent events.SQSEvent) (Myresponse , error) {
 
-	connStr := "postgresql://yakshit:-eZfWw2zQKffFmvntDaL-g@sparkdb-6147.6xw.aws-ap-southeast-1.cockroachlabs.cloud:26257/defaultdb?sslmode=verify-full"
+	connStr := "postgresql://<MY PASS WORD 🤐ℹ️😂🙈🤫🤨✌️>@sparkdb-6147.6xw.aws-ap-southeast-1.cockroachlabs.cloud:26257/defaultdb?sslmode=verify-full"
 	db, err := sql.Open("postgres", connStr)
 
 	defer db.Close()
