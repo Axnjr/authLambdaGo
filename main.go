@@ -1,30 +1,44 @@
 package main
+
 import (
-	"context";
-	"database/sql";
-	"fmt";
-	"log";
-	"time";
-	"github.com/aws/aws-lambda-go/events";
+	"context"
+	"database/sql"
+	"fmt"
+	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
-	_ "github.com/lib/pq";
-);
+	"github.com/joho/godotenv"
+	_ "github.com/lib/pq"
+	"log"
+	"os"
+	"time"
+)
 
 type Myresponse struct {
 	Message int32
 }
 
-func main() { lambda.Start(requestHandler) }
+func main() {
+	lambda.Start(requestHandler)
+}
 
 func requestHandler(ctx context.Context, sqsEvent events.SQSEvent) (Myresponse , error) {
 
-	connStr := "postgresql://yakshit:-eZfWw2zQKffFmvntDaL-g@sparkdb-6147.6xw.aws-ap-southeast-1.cockroachlabs.cloud:26257/defaultdb?sslmode=verify-full"
+	err := godotenv.Load()
+	if(err != nil){
+		log.Fatal("DB_URL NOT FOUND. ENV MOT LOADED !! ☠️💀🤔🤨")
+	}
+
+	connStr := os.Getenv("DB_URL")
 	db, err := sql.Open("postgres", connStr)
 
 	defer db.Close()
 
-	if err != nil { log.Fatal(err) }
-	if err = db.Ping(); err != nil { log.Fatal(err) }
+	if err != nil {
+		log.Fatal(err)
+	}
+	if err = db.Ping(); err != nil {
+		log.Fatal(err)
+	}
 
 	query := `SELECT * FROM userdetails WHERE apiKey = $1`
 
@@ -43,16 +57,17 @@ func requestHandler(ctx context.Context, sqsEvent events.SQSEvent) (Myresponse ,
 		rateLimit(apikey, plantype, hits, expiryon, db)
 	}
 
-	return Myresponse{ 200 }, nil;
+	return Myresponse{200}, nil
 }
 
 func rateLimit(apiKey string, plantype string, hits int32, expiryon string, db *sql.DB) {
-	year, month , day := time.Now().Date()
-	currentDate := fmt.Sprint("%y-%m-%a",year, month, day)
+	year, month, day := time.Now().Date()
+	currentDate := fmt.Sprint("%y-%m-%a", year, month, day)
 
 	switch plantype {
 
-		case "Hobby": {
+	case "Hobby":
+		{
 			if hits > 100 {
 				db.Exec("UPDATE userkeystatus SET status = 'Daily limit reached' WHERE apikey = $1;", apiKey)
 				println("A user with Hobby plan reached its daily limit")
@@ -62,8 +77,9 @@ func rateLimit(apiKey string, plantype string, hits int32, expiryon string, db *
 			}
 		}
 
-		case "Priority": {
-			println("DATES: ",expiryon, currentDate)
+	case "Priority":
+		{
+			println("DATES: ", expiryon, currentDate)
 
 			if expiryon == "2024-03-03" {
 				db.Exec("UPDATE userdetails SET plantype = 'Hobby', hits = 1 WHERE apikey = $1")
@@ -79,9 +95,10 @@ func rateLimit(apiKey string, plantype string, hits int32, expiryon string, db *
 			}
 		}
 
-		case "Enterprize":{
-			println("ENTERPRIZE PLAN EXPIRED RE-SUBSCRIBE TO YOUR ENTERPRIZE PLAN TO CONTINUE !!");
+	case "Enterprize":
+		{
+			println("ENTERPRIZE PLAN EXPIRED RE-SUBSCRIBE TO YOUR ENTERPRIZE PLAN TO CONTINUE !!")
 		}
-	
+
 	}
 }
