@@ -23,12 +23,7 @@ func main() {
 
 func requestHandler(ctx context.Context, sqsEvent events.SQSEvent) (Myresponse , error) {
 
-	err := godotenv.Load()
-	if(err != nil){
-		log.Fatal("DB_URL NOT FOUND. ENV MOT LOADED !! ☠️💀🤔🤨")
-	}
-
-	connStr := os.Getenv("DB_URL")
+	connStr := "postgresql://yakshit:-eZfWw2zQKffFmvntDaL-g@sparkdb-6147.6xw.aws-ap-southeast-1.cockroachlabs.cloud:26257/defaultdb?sslmode=verify-full"
 	db, err := sql.Open("postgres", connStr)
 
 	defer db.Close()
