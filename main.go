@@ -27,11 +27,13 @@ func requestHandler(ctx context.Context, sqsEvent events.SQSEvent) (Myresponse ,
 	connStr := os.Getenv("DB_URL")
 	db, err := sql.Open("postgres", connStr)
 
-	defer db.Close()
-
+	
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	defer db.Close()
+
 	if err = db.Ping(); err != nil {
 		log.Fatal(err)
 	}
@@ -56,9 +58,14 @@ func requestHandler(ctx context.Context, sqsEvent events.SQSEvent) (Myresponse ,
 	return Myresponse{200}, nil
 }
 
+func DateToString(year int, month time.Month, day int) string {
+	return fmt.Sprintf("%d-%02d-%02d", year, int(month), day)
+}  
+
 func rateLimit(apiKey string, plantype string, hits int32, expiryon string, db *sql.DB) {
+
 	year, month, day := time.Now().Date()
-	currentDate := fmt.Sprint("%y-%m-%a", year, month, day)
+	currentDate := DateToString(year, month, day)
 
 	switch plantype {
 
@@ -75,11 +82,14 @@ func rateLimit(apiKey string, plantype string, hits int32, expiryon string, db *
 
 	case "Priority":
 		{
-			println("DATES: ", expiryon, currentDate)
+			println("DATES: ", expiryon[:10], currentDate)
 
-			if expiryon == "2024-03-03" {
-				db.Exec("UPDATE userdetails SET plantype = 'Hobby', hits = 1 WHERE apikey = $1")
+			// expirion is this format: 2023-03-09T00:00:00Z hence slicing it till 10th charcater ..
+
+			if expiryon[:10] == currentDate {
+				db.Exec("UPDATE userdetails SET plantype = 'Hobby', hits = 1 WHERE apikey = $1", apiKey)
 				println("User's priority plan with has expired !")
+				// send some notification to the user that his priority plan has expired and he has been re-subscribed to hobby plan
 			}
 
 			if hits > 5000 {
