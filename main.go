@@ -2,8 +2,8 @@ package main
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
+	"database/sql"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/joho/godotenv"
@@ -42,16 +42,22 @@ func requestHandler(ctx context.Context, sqsEvent events.SQSEvent) (Myresponse ,
 
 	for _ , mes  := range sqsEvent.Records {
 
-		var name string
-		var email string
-		var apikey string
-		var hits int32
+		var id string
 		var plantype string
+		var apikey string
 		var expiryon string
+		var hits int32
+		var email string
 
-		err := db.QueryRow(query, mes.Body).Scan(&name, &email, &plantype, &apikey, &expiryon, &hits)
-		if err != nil { log.Fatal("QUERY RETURNED: ", err) }
+		println("CHAL RAHA HAI ?????????????????????????????????")
 
+		err := db.QueryRow(query, mes.Body).Scan(&id, &plantype, &apikey, &expiryon, &hits, &email)
+		if err != nil { 
+			println("plantype", plantype, "apikey", apikey, "hits", hits, "expiryon", expiryon)
+			log.Fatal("QUERY RETURNED: ", err) 
+		}
+		
+		// log.Fatal("email", email, "apikey", apikey, "hits", hits, "plantype", plantype, "expiryon", expiryon)
 		rateLimit(apikey, plantype, hits, expiryon, db)
 	}
 
